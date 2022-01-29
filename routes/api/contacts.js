@@ -1,14 +1,14 @@
 const express = require("express");
-const contacts = require("../../models/contacts");
-const Joi = require("joi");
+const {
+  Contact,
+  validateSchema,
+  favoriteValidate,
+} = require("../../model/contacts/contact");
 
 const router = express.Router();
 
 router.get("/", async (req, res, next) => {
-  const result = await contacts.listContacts();
-  if (!contacts) {
-    res.json({ message: "template message" });
-  }
+  const result = await Contact.find({});
   res.status(200).json({
     status: "succsess",
     code: 200,
@@ -18,7 +18,7 @@ router.get("/", async (req, res, next) => {
 
 router.get("/:contactId", async (req, res, next) => {
   const id = req.params.contactId;
-  const contact = await contacts.getContactById(id);
+  const contact = await Contact.findById(id);
   if (!contact) {
     res.status(404).json({ message: `Not found contact with ID:${id}` });
   }
@@ -30,21 +30,11 @@ router.get("/:contactId", async (req, res, next) => {
 });
 
 router.post("/", async (req, res, next) => {
-  const schema = Joi.object({
-    name: Joi.string().alphanum().min(3).max(30).required(),
-    email: Joi.string()
-      .required()
-      .email({
-        minDomainSegments: 2,
-        tlds: { allow: ["com", "net", "uk", "org", "net", "ca"] },
-      }),
-    phone: Joi.string().required(),
-  });
-  const validationResult = schema.validate(req.body);
+  const validationResult = validateSchema.validate(req.body);
   if (validationResult.error) {
     return res.status(404).json({ status: validationResult.error.details });
   }
-  const newContact = await contacts.addContact(req.body);
+  const newContact = await Contact.create(req.body);
   res.status(201).json({
     status: "succsess",
     code: 200,
@@ -54,7 +44,7 @@ router.post("/", async (req, res, next) => {
 
 router.delete("/:contactId", async (req, res, next) => {
   const id = req.params.contactId;
-  const deleteContact = await contacts.removeContact(id);
+  const deleteContact = await Contact.findByIdAndRemove(id);
   if (deleteContact === null) {
     res.status(404).json({ message: `Not found contact with ID:${id}` });
   }
@@ -62,15 +52,7 @@ router.delete("/:contactId", async (req, res, next) => {
 });
 
 router.put("/:contactId", async (req, res, next) => {
-  const schema = Joi.object({
-    name: Joi.string().alphanum().min(3).max(30),
-    email: Joi.string().email({
-      minDomainSegments: 2,
-      tlds: { allow: ["com", "net", "uk", "org", "net", "ca"] },
-    }),
-    phone: Joi.string(),
-  });
-  const validationResult = schema.validate(req.body);
+  const validationResult = validateSchema.validate(req.body);
   if (validationResult.error) {
     return res.status(404).json({ status: validationResult.error.details });
   }
@@ -78,7 +60,9 @@ router.put("/:contactId", async (req, res, next) => {
   if (!req.body) {
     res.status(400).json({ message: "missing fields" });
   }
-  const updateContact = await contacts.updateContact(id, req.body);
+  const updateContact = await Contact.findByIdAndUpdate(id, req.body, {
+    new: true,
+  });
   if (!updateContact) {
     res.status(404).json({ message: "Not found" });
   }
@@ -89,4 +73,25 @@ router.put("/:contactId", async (req, res, next) => {
   });
 });
 
+router.patch("/:contactId/favorite", async (req, res, next) => {
+  const validationResult = favoriteValidate.validate(req.body);
+  if (validationResult.error) {
+    return res.status(404).json({ status: validationResult.error.details });
+  }
+  const id = req.params.contactId;
+  if (!req.body) {
+    res.status(400).json({ message: "missing fields" });
+  }
+  const updateContact = await Contact.findByIdAndUpdate(id, req.body, {
+    new: true,
+  });
+  if (!updateContact) {
+    res.status(404).json({ message: "Not found" });
+  }
+  res.status(200).json({
+    status: "succsess",
+    code: 200,
+    data: { result: updateContact },
+  });
+});
 module.exports = router;
