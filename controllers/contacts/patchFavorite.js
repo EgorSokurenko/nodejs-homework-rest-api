@@ -1,4 +1,4 @@
-const Contact = require("../../model/contacts/contact");
+const { Contact } = require("../../model/contacts/contact");
 const patchFavorite = async (req, res, next) => {
   const id = req.params.contactId;
   const updateContact = await Contact.findByIdAndUpdate(id, req.body, {
