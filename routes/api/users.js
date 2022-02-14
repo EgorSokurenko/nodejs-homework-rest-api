@@ -39,6 +39,7 @@ router.patch(
         avatarURL,
       });
     } catch (error) {
+      console.log(error);
       next(error);
     }
   }
