@@ -19,6 +19,7 @@ const userSchemma = Schema({
     type: String,
     default: null,
   },
+  avatarURL: String,
 });
 const registerSchema = Joi.object({
   password: Joi.string().min(3).max(30).required(),
